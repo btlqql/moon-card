@@ -55,7 +55,7 @@ mooncard select <aid-hex>              build SELECT by AID
 mooncard gpo <pdol-data-hex>           build GET PROCESSING OPTIONS
 mooncard read-record <record> <sfi>    build READ RECORD (decimal)
 mooncard gen-ac <p1> <cdol-data-hex>   build GENERATE AC
-mooncard log <transaction.log> [--json] render a recorded APDU log
+mooncard log <transaction.log> [--json|--csv] render a recorded APDU log
 mooncard luhn <pan>                    check the Luhn digit
 mooncard track2 <text>                 parse track 2 equivalent data
 ```
@@ -93,7 +93,7 @@ moon run cmd/main --target js -- response "6F 09 84 07 A0 00 00 00 03 10 10 90 0
 - Track 2 解析。
 - 交易日志的命令/响应/卡片信息提取；畸形输入记录。
 - pyemv 参考编码示例的 TLV 编码一致性。
-- JSON 交易报告：掩码 PAN、Luhn、状态字、命令与标签。
+- JSON / CSV 交易报告：掩码 PAN、Luhn、状态字、命令与标签。
 
 GitHub Actions 在 wasm、wasm-gc、js、native 四个后端执行 check/build/test。
 

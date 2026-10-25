@@ -280,3 +280,44 @@ pub fn render_transaction_json(report : TxReport) -> String {
   }
   "{" + fields.join(",") + "}"
 }
+
+pub fn render_transaction_csv(report : TxReport) -> String {
+  let out = StringBuilder()
+  out.write_string("index,direction,command,status,sw,bytes\n")
+  for i in 0..<report.steps.length() {
+    let step = report.steps[i]
+    let command = match step.apdu {
+      Some(apdu) => command_name(apdu)
+      None => ""
+    }
+    let status = match step.response {
+      Some(response) => status_description(response.sw)
+      None => ""
+    }
+    let sw = match step.response {
+      Some(response) => hex_int(response.sw, 4)
+      None => ""
+    }
+    out.write_string(
+      (i + 1).to_string() + "," + csv_field(step.direction) + "," +
+      csv_field(command) + "," + csv_field(status) + "," + csv_field(sw) +
+      "," + csv_field(hex_encode(step.bytes)) + "\n",
+    )
+  }
+  out.to_string()
+}
+
+fn csv_field(text : String) -> String {
+  let out = StringBuilder()
+  out.write_char('"')
+  for i in 0..<text.length() {
+    let c = text[i].to_int()
+    if c == 34 {
+      out.write_string("\"\"")
+    } else {
+      out.write_char(Char::from_int(c))
+    }
+  }
+  out.write_char('"')
+  out.to_string()
+}

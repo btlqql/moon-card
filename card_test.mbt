@@ -218,3 +218,15 @@ test "card profile validation reports issues" {
   assert_eq(validate_service_code("201").length(), 0)
   assert_true(validate_service_code("20A").length() > 0)
 }
+
+///|
+test "CSV transaction report has one row per step" {
+  let log = [
+    ">> 00 A4 04 00 0E 32 50 41 59 2E 53 59 53 2E 44 44 46 30 31 00",
+    "<< 6F 09 84 07 A0 00 00 00 03 10 10 90 00",
+  ].join("\n")
+  let csv = render_transaction_csv(parse_transaction_log(log))
+  assert_true(csv.has_prefix("index,direction,command,status,sw,bytes\n"))
+  assert_true(csv.contains("\"SELECT\""))
+  assert_true(csv.contains("\"9000\""))
+}

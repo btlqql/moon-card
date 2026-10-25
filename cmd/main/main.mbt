@@ -204,15 +204,21 @@ fn run() -> Unit {
       }
     }
   } else if command == "log" && (args.length() == 4 || args.length() == 5) {
-    let mut json = false
+    let mut format = "text"
     let mut path = ""
     if args.length() == 4 {
       path = args[3]
     } else if args[3] == "--json" {
-      json = true
+      format = "json"
       path = args[4]
     } else if args[4] == "--json" {
-      json = true
+      format = "json"
+      path = args[3]
+    } else if args[3] == "--csv" {
+      format = "csv"
+      path = args[4]
+    } else if args[4] == "--csv" {
+      format = "csv"
       path = args[3]
     } else {
       usage()
@@ -222,8 +228,10 @@ fn run() -> Unit {
     match read_text(path) {
       Some(text) => {
         let report = @card.parse_transaction_log(text)
-        println(if json {
+        println(if format == "json" {
           @card.render_transaction_json(report)
+        } else if format == "csv" {
+          @card.render_transaction_csv(report)
         } else {
           @card.render_transaction(report)
         })
