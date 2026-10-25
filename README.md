@@ -90,7 +90,7 @@ moon run cmd/main --target js -- response "6F 09 84 07 A0 00 00 00 03 10 10 90 0
 - 状态字说明（成功、文件不存在、PIN 重试次数）。
 - GPO 的 77 与旧 80 两种模板。
 - 记录中的 PAN、有效期、持卡人；Luhn；掩码；有效期格式；PAN/有效期/服务码校验。
-- Track 2 解析。
+- Track 2 解析；服务码解释（interchange/authorization/security）。
 - 交易日志的命令/响应/卡片信息提取；畸形输入记录。
 - pyemv 参考编码示例的 TLV 编码一致性。
 - JSON / CSV 交易报告：掩码 PAN、Luhn、状态字、命令与标签。

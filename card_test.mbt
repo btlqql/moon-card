@@ -251,3 +251,11 @@ test "flatten and path lookup over nested TLV" {
   }
   assert_true(find_path(items, [0x70, 0x9f02]) is None)
 }
+
+///|
+test "track 2 service code interpretation" {
+  assert_true(service_code_text("102").contains("international"))
+  assert_true(service_code_text("102").contains("no restriction"))
+  assert_true(service_code_text("102").contains("PIN"))
+  assert_eq(service_code_text("20A"), "invalid service code")
+}

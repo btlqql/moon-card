@@ -207,3 +207,45 @@ pub fn validate_service_code(code : String) -> Array[String] {
   }
   issues
 }
+
+pub fn service_code_text(code : String) -> String {
+  if code.length() != 3 || !all_digits(code, 0, 3) {
+    return "invalid service code"
+  }
+  let first = code[0].to_int() - 48
+  let second = code[1].to_int() - 48
+  let third = code[2].to_int() - 48
+  let interchange = if first == 1 {
+    "international"
+  } else if first == 2 {
+    "interbank"
+  } else if first == 5 {
+    "private"
+  } else if first == 6 {
+    "merchant"
+  } else if first == 7 {
+    "fuel"
+  } else {
+    "unknown"
+  }
+  let authorization = if second == 0 {
+    "no restriction"
+  } else if second == 2 {
+    "normal"
+  } else if second == 4 {
+    "positive online"
+  } else {
+    "unknown"
+  }
+  let security = if third == 0 {
+    "none"
+  } else if third == 2 {
+    "PIN"
+  } else if third == 5 {
+    "PIN if supported"
+  } else {
+    "unknown"
+  }
+  "interchange=" + interchange + ", authorization=" + authorization +
+  ", security=" + security
+}
