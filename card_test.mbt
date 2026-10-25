@@ -167,3 +167,18 @@ test "JSON transaction report masks the PAN and keeps statuses" {
   assert_true(json.contains("\"command\":\"SELECT\""))
   assert_true(json.contains("\"tags\""))
 }
+
+///|
+test "TLV encoding matches the pyemv reference example" {
+  let items : Array[Tlv] = [
+    { tag: 0x9c, constructed: false, value: h("01"), children: [] },
+    {
+      tag: 0xe0,
+      constructed: true,
+      value: [],
+      children: [{ tag: 0x5f2a, constructed: false, value: h("02 08"), children: [] }],
+    },
+    { tag: 0x9f02, constructed: false, value: [], children: [] },
+  ]
+  assert_eq(hex_encode(encode_tlvs(items)), "9C 01 01 E0 05 5F 2A 02 02 08 9F 02 00")
+}

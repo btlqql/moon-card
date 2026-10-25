@@ -83,7 +83,7 @@ moon run cmd/main --target js -- response "6F 09 84 07 A0 00 00 00 03 10 10 90 0
 
 ## 测试
 
-`moon test` 共 11 项：
+`moon test` 共 12 项：
 
 - TLV 嵌套解析、标签查找、构造模板编码往返、截断/非法长度。
 - APDU 短格式 case 1/2/3/4 往返、Le=256、响应拆分。
@@ -92,9 +92,16 @@ moon run cmd/main --target js -- response "6F 09 84 07 A0 00 00 00 03 10 10 90 0
 - 记录中的 PAN、有效期、持卡人；Luhn；掩码；有效期格式。
 - Track 2 解析。
 - 交易日志的命令/响应/卡片信息提取；畸形输入记录。
+- pyemv 参考编码示例的 TLV 编码一致性。
 - JSON 交易报告：掩码 PAN、Luhn、状态字、命令与标签。
 
 GitHub Actions 在 wasm、wasm-gc、js、native 四个后端执行 check/build/test。
+
+## 外部对照
+
+- [pyemv 1.5.0 对照](docs/reference-comparison.md)：FCI、记录、GPO、TLV 编码与截断拒绝均一致。
+- 复现：`python scripts/reference_compare.py`（参考库装在 `D:/Codex/tools/pyrefs`，不是运行时依赖）。
+- 未对照密码学、扩展 APDU、逻辑通道和真实终端日志。
 
 ## 明确不做
 
