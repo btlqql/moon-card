@@ -238,3 +238,16 @@ test "expanded EMV tag registry" {
   assert_eq(tag_name(0x61), "Application Template")
   assert_eq(tag_name(0xffff), "Unknown")
 }
+
+///|
+test "flatten and path lookup over nested TLV" {
+  let record = h("70 15 5A 08 41 11 11 11 11 11 11 11 5F 24 03 25 12 31 5F 20 02 4A 4F")
+  let items = parse_tlv(record)
+  let flat = flatten_tlvs(items)
+  assert_eq(flat.length(), 3)
+  match find_path(items, [0x70, 0x5f24]) {
+    Some(expiry) => assert_eq(hex_encode(expiry.value), "25 12 31")
+    None => fail("path 70/5F24 should exist")
+  }
+  assert_true(find_path(items, [0x70, 0x9f02]) is None)
+}

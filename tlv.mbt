@@ -360,3 +360,43 @@ pub fn encode_tlvs(items : Array[Tlv]) -> Array[Int] {
   }
   out
 }
+
+pub fn flatten_tlvs(items : Array[Tlv]) -> Array[Tlv] {
+  let out : Array[Tlv] = Array::new()
+  for item in items {
+    if item.constructed {
+      for child in flatten_tlvs(item.children) {
+        out.push(child)
+      }
+    } else {
+      out.push(item)
+    }
+  }
+  out
+}
+
+pub fn find_path(items : Array[Tlv], path : Array[Int]) -> Tlv? {
+  if path.length() == 0 {
+    return None
+  }
+  let mut current = items
+  for depth in 0..<path.length() {
+    let mut found : Tlv? = None
+    for item in current {
+      if item.tag == path[depth] {
+        found = Some(item)
+        break
+      }
+    }
+    match found {
+      Some(item) =>
+        if depth == path.length() - 1 {
+          return Some(item)
+        } else {
+          current = item.children
+        }
+      None => return None
+    }
+  }
+  None
+}
