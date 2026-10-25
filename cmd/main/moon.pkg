@@ -1,0 +1,8 @@
+supported_targets = "js"
+
+import {
+  "btlqql/moon_card" @card,
+  "moonbitlang/core/env",
+}
+
+pkgtype(kind: "executable")
