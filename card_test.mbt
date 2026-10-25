@@ -152,3 +152,18 @@ test "transaction log records malformed input" {
   assert_eq(report.steps.length(), 1)
   assert_eq(report.errors.length(), 1)
 }
+
+///|
+test "JSON transaction report masks the PAN and keeps statuses" {
+  let log = [
+    ">> 00 A4 04 00 0E 32 50 41 59 2E 53 59 53 2E 44 44 46 30 31 00",
+    "<< 6F 09 84 07 A0 00 00 00 03 10 10 90 00",
+    "<< 70 15 5A 08 41 11 11 11 11 11 11 11 5F 24 03 25 12 31 5F 20 02 4A 4F 90 00",
+  ].join("\n")
+  let json = render_transaction_json(parse_transaction_log(log))
+  assert_true(json.contains("\"pan\":\"411111******1111\""))
+  assert_true(json.contains("\"luhn\":true"))
+  assert_true(json.contains("\"status\":\"success\""))
+  assert_true(json.contains("\"command\":\"SELECT\""))
+  assert_true(json.contains("\"tags\""))
+}

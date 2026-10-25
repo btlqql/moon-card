@@ -181,3 +181,102 @@ pub fn render_transaction(report : TxReport) -> String {
   }
   out.to_string()
 }
+
+fn json_escape(text : String) -> String {
+  let out = StringBuilder()
+  for i in 0..<text.length() {
+    let c = text[i].to_int()
+    if c == 34 {
+      out.write_string("\\\"")
+    } else if c == 92 {
+      out.write_string("\\\\")
+    } else if c == 10 {
+      out.write_string("\\n")
+    } else if c == 13 {
+      out.write_string("\\r")
+    } else if c == 9 {
+      out.write_string("\\t")
+    } else if c < 32 {
+      out.write_string("\\u00")
+      out.write_char(hex_nibble_char(c >> 4))
+      out.write_char(hex_nibble_char(c))
+    } else {
+      out.write_char(Char::from_int(c))
+    }
+  }
+  out.to_string()
+}
+
+fn json_string(text : String) -> String {
+  "\"" + json_escape(text) + "\""
+}
+
+fn quoted_array(items : Array[String]) -> String {
+  "[" + items.join(",") + "]"
+}
+
+fn step_json(index : Int, step : TxStep) -> String {
+  let fields : Array[String] = [
+    "\"index\":" + index.to_string(),
+    "\"direction\":" + json_string(step.direction),
+    "\"bytes\":" + json_string(hex_encode(step.bytes)),
+    "\"note\":" + json_string(step.note),
+  ]
+  match step.apdu {
+    Some(command) =>
+      fields.push("\"command\":" + json_string(command_name(command)))
+    None => ()
+  }
+  match step.response {
+    Some(response) => {
+      fields.push("\"sw\":" + json_string(hex_int(response.sw, 4)))
+      fields.push("\"status\":" + json_string(status_description(response.sw)))
+    }
+    None => ()
+  }
+  if step.tlv.length() > 0 {
+    let tags : Array[String] = Array::new()
+    for tag in collect_tags(step.tlv) {
+      tags.push(json_string(tag_to_hex(tag)))
+    }
+    fields.push("\"tags\":" + quoted_array(tags))
+  }
+  "{" + fields.join(",") + "}"
+}
+
+pub fn render_transaction_json(report : TxReport) -> String {
+  let steps : Array[String] = Array::new()
+  for i in 0..<report.steps.length() {
+    steps.push(step_json(i + 1, report.steps[i]))
+  }
+  let errors : Array[String] = Array::new()
+  for error in report.errors {
+    errors.push(json_string(error))
+  }
+  let fields : Array[String] = [
+    "\"steps\":" + report.steps.length().to_string(),
+    "\"errors\":" + quoted_array(errors),
+    "\"messages\":" + quoted_array(steps),
+  ]
+  match report.pan {
+    Some(value) => {
+      fields.push("\"pan\":" + json_string(mask_pan(value)))
+      let luhn = if luhn_valid(value) { "true" } else { "false" }
+      fields.push("\"luhn\":" + luhn)
+    }
+    None => ()
+  }
+  match report.expiry {
+    Some(value) => fields.push("\"expiry\":" + json_string(format_expiry(value)))
+    None => ()
+  }
+  match report.cardholder {
+    Some(value) => fields.push("\"cardholder\":" + json_string(value))
+    None => ()
+  }
+  match report.label {
+    Some(value) => fields.push("\"label\":" + json_string(value))
+    None => ()
+  }
+  "{" + fields.join(",") + "}"
+}

@@ -203,9 +203,31 @@ fn run() -> Unit {
         exit_code(2)
       }
     }
-  } else if command == "log" && args.length() == 4 {
-    match read_text(args[3]) {
-      Some(text) => println(@card.render_transaction(@card.parse_transaction_log(text)))
+  } else if command == "log" && (args.length() == 4 || args.length() == 5) {
+    let mut json = false
+    let mut path = ""
+    if args.length() == 4 {
+      path = args[3]
+    } else if args[3] == "--json" {
+      json = true
+      path = args[4]
+    } else if args[4] == "--json" {
+      json = true
+      path = args[3]
+    } else {
+      usage()
+      exit_code(2)
+      return
+    }
+    match read_text(path) {
+      Some(text) => {
+        let report = @card.parse_transaction_log(text)
+        println(if json {
+          @card.render_transaction_json(report)
+        } else {
+          @card.render_transaction(report)
+        })
+      }
       None => {
         stderr("ERROR: cannot read transaction log")
         exit_code(2)
