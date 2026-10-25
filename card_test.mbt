@@ -182,3 +182,18 @@ test "TLV encoding matches the pyemv reference example" {
   ]
   assert_eq(hex_encode(encode_tlvs(items)), "9C 01 01 E0 05 5F 2A 02 02 08 9F 02 00")
 }
+
+///|
+test "extended APDU encoding and parsing" {
+  let data : Array[Int] = Array::new()
+  for _ in 0..<300 {
+    data.push(0xaa)
+  }
+  let command = Apdu::new(0x00, 0xda, 0x01, 0x02, data=data, le=300)
+  let encoded = command.encode_extended()
+  assert_eq(encoded.length(), 4 + 1 + 2 + 300 + 2)
+  assert_eq(hex_encode([encoded[0], encoded[1], encoded[2], encoded[3], encoded[4], encoded[5], encoded[6]]), "00 DA 01 02 00 01 2C")
+  let parsed = parse_apdu(encoded)
+  assert_eq(parsed.data.length(), 300)
+  assert_eq(parsed.le, Some(300))
+}

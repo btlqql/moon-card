@@ -54,6 +54,40 @@ pub fn Apdu::encode(self : Apdu) -> Array[Int] raise ApduError {
   out
 }
 
+pub fn Apdu::encode_extended(self : Apdu) -> Array[Int] raise ApduError {
+  let le_needs_extended = match self.le {
+    Some(le) => le > 256
+    None => false
+  }
+  let needs_extended = self.data.length() > 255 || le_needs_extended
+  if !needs_extended {
+    return self.encode()
+  }
+  if self.data.length() > 65535 {
+    raise DataTooLarge(self.data.length())
+  }
+  let out : Array[Int] = [self.cla, self.ins, self.p1, self.p2, 0]
+  if self.data.length() > 0 {
+    out.push((self.data.length() >> 8) & 0xff)
+    out.push(self.data.length() & 0xff)
+    for b in self.data {
+      out.push(b)
+    }
+  }
+  match self.le {
+    Some(le) => {
+      if le < 1 || le > 65536 {
+        raise LeTooLarge(le)
+      }
+      let encoded = if le == 65536 { 0 } else { le }
+      out.push((encoded >> 8) & 0xff)
+      out.push(encoded & 0xff)
+    }
+    None => ()
+  }
+  out
+}
+
 pub fn parse_apdu(bytes : Array[Int]) -> Apdu raise ApduError {
   if bytes.length() < 4 {
     raise Truncated
@@ -70,6 +104,40 @@ pub fn parse_apdu(bytes : Array[Int]) -> Apdu raise ApduError {
       data: [],
       le: Some(if bytes[4] == 0 { 256 } else { bytes[4] }),
     }
+  }
+  if bytes[4] == 0 && bytes.length() > 5 {
+    let rest = bytes.length() - 5
+    if rest == 2 {
+      let le = (bytes[5] << 8) | bytes[6]
+      return {
+        cla: bytes[0],
+        ins: bytes[1],
+        p1: bytes[2],
+        p2: bytes[3],
+        data: [],
+        le: Some(if le == 0 { 65536 } else { le }),
+      }
+    }
+    if rest < 2 {
+      raise BadLength
+    }
+    let lc = (bytes[5] << 8) | bytes[6]
+    if lc < 0 || bytes.length() < 7 + lc {
+      raise Truncated
+    }
+    let data : Array[Int] = Array::new()
+    for i in 0..<lc {
+      data.push(bytes[7 + i])
+    }
+    let le = if bytes.length() == 7 + lc {
+      None
+    } else if bytes.length() == 9 + lc {
+      let value = (bytes[7 + lc] << 8) | bytes[8 + lc]
+      Some(if value == 0 { 65536 } else { value })
+    } else {
+      raise BadLength
+    }
+    return { cla: bytes[0], ins: bytes[1], p1: bytes[2], p2: bytes[3], data, le }
   }
   let lc = bytes[4]
   if bytes.length() < 5 + lc {
