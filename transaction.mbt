@@ -321,3 +321,35 @@ fn csv_field(text : String) -> String {
   out.write_char('"')
   out.to_string()
 }
+
+pub(all) struct TxSummary {
+  commands : Int
+  responses : Int
+  successes : Int
+  errors : Int
+}
+
+pub fn summarize_transaction(report : TxReport) -> TxSummary {
+  let mut commands = 0
+  let mut responses = 0
+  let mut successes = 0
+  let mut errors = 0
+  for step in report.steps {
+    match step.apdu {
+      Some(_) => commands = commands + 1
+      None => ()
+    }
+    match step.response {
+      Some(response) => {
+        responses = responses + 1
+        if response.sw == 0x9000 {
+          successes = successes + 1
+        } else {
+          errors = errors + 1
+        }
+      }
+      None => ()
+    }
+  }
+  { commands, responses, successes, errors }
+}

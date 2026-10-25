@@ -259,3 +259,18 @@ test "track 2 service code interpretation" {
   assert_true(service_code_text("102").contains("PIN"))
   assert_eq(service_code_text("20A"), "invalid service code")
 }
+
+///|
+test "transaction summary counts commands and statuses" {
+  let log = [
+    ">> 00 A4 04 00 0E 32 50 41 59 2E 53 59 53 2E 44 44 46 30 31 00",
+    "<< 6F 09 84 07 A0 00 00 00 03 10 10 90 00",
+    ">> 80 A8 00 00 02 83 00 00",
+    "<< 77 0A 82 02 19 80 94 04 08 01 01 00 6A 82",
+  ].join("\n")
+  let summary = summarize_transaction(parse_transaction_log(log))
+  assert_eq(summary.commands, 2)
+  assert_eq(summary.responses, 2)
+  assert_eq(summary.successes, 1)
+  assert_eq(summary.errors, 1)
+}
