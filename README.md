@@ -14,7 +14,7 @@ MoonCakes 上已有支付相关模块，但不在这一层：
 - [cstoooo/mooniso_lite](https://mooncakes.io/docs/cstoooo/mooniso_lite) 与 [moonpay_flow](https://mooncakes.io/docs/cstoooo/moonpay_flow) 处理 ISO 20022 支付报文与生命周期。
 - [lindividual/der](https://mooncakes.io/docs/lindividual/der) 处理 ASN.1 DER（证书/密钥），不是 EMV 的 BER-TLV 标签空间。
 
-MoonCard 处理的是**卡片与终端之间**的 APDU 和 EMV 数据对象：SELECT、GPO、READ RECORD、GENERATE AC、BER-TLV、PAN/有效期/持卡人、状态字与 NRC 风格的失败原因。
+MoonCard 处理的是**卡片与终端之间**的 APDU 和 EMV 数据对象：短/扩展 APDU、SELECT、GPO、READ RECORD、GENERATE AC、BER-TLV、AFL、PAN/有效期/持卡人、状态字与失败原因。
 
 面向的任务：拿到一段终端或 Level 3 认证的 APDU 日志，回答“这一步选了什么应用、GPO 返回了什么、读到了哪张卡、哪一步失败、失败状态字是什么”。
 
@@ -83,12 +83,12 @@ moon run cmd/main --target js -- response "6F 09 84 07 A0 00 00 00 03 10 10 90 0
 
 ## 测试
 
-`moon test` 共 13 项：
+`moon test` 共 20 项：
 
 - TLV 嵌套解析、标签查找、扩展标签字典、扁平化/路径查询、构造模板编码往返、截断/非法长度。
 - APDU 短格式 case 1/2/3/4 往返、Le=256、扩展 APDU 往返、响应拆分。
 - 状态字说明（成功、文件不存在、PIN 重试次数）。
-- GPO 的 77 与旧 80 两种模板。
+- GPO 的 77 与旧 80 两种模板；AFL 条目解析。
 - 记录中的 PAN、有效期、持卡人；Luhn；掩码；有效期格式；PAN/有效期/服务码校验。
 - Track 2 解析；服务码解释（interchange/authorization/security）。
 - 交易日志的命令/响应/卡片信息提取；命令/响应/成功/错误计数；畸形输入记录。
@@ -101,7 +101,7 @@ GitHub Actions 在 wasm、wasm-gc、js、native 四个后端执行 check/build/t
 
 - [pyemv 1.5.0 对照](docs/reference-comparison.md)：FCI、记录、GPO、TLV 编码与截断拒绝均一致。
 - 复现：`python scripts/reference_compare.py`（参考库装在 `D:/Codex/tools/pyrefs`，不是运行时依赖）。
-- 未对照密码学、扩展 APDU、逻辑通道和真实终端日志。
+- 未对照密码学、逻辑通道、命令链和真实终端日志；扩展 APDU 只有本地往返测试。
 
 ## 明确不做
 
