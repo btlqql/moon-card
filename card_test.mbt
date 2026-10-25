@@ -230,3 +230,11 @@ test "CSV transaction report has one row per step" {
   assert_true(csv.contains("\"SELECT\""))
   assert_true(csv.contains("\"9000\""))
 }
+
+///|
+test "expanded EMV tag registry" {
+  assert_eq(tag_name(0x5f28), "Issuer Country Code")
+  assert_eq(tag_name(0x9f66), "Terminal Transaction Qualifiers")
+  assert_eq(tag_name(0x61), "Application Template")
+  assert_eq(tag_name(0xffff), "Unknown")
+}

@@ -237,6 +237,74 @@ pub fn tag_name(tag : Int) -> String {
     "FCI Proprietary Template"
   } else if tag == 0xbf0c {
     "FCI Issuer Discretionary Data"
+  } else if tag == 0x5f28 {
+    "Issuer Country Code"
+  } else if tag == 0x5f2d {
+    "Language Preference"
+  } else if tag == 0x5f30 {
+    "Service Code"
+  } else if tag == 0x5f36 {
+    "Transaction Currency Code"
+  } else if tag == 0x5f50 {
+    "Issuer URL"
+  } else if tag == 0x5f53 {
+    "IBAN"
+  } else if tag == 0x5f54 {
+    "Bank Identifier Code"
+  } else if tag == 0x5f56 {
+    "Issuer Country Code (2)"
+  } else if tag == 0x61 {
+    "Application Template"
+  } else if tag == 0x9f07 {
+    "Application Usage Control"
+  } else if tag == 0x9f08 {
+    "Application Version Number"
+  } else if tag == 0x9f0d {
+    "Issuer Action Code - Default"
+  } else if tag == 0x9f0e {
+    "Issuer Action Code - Denial"
+  } else if tag == 0x9f0f {
+    "Issuer Action Code - Online"
+  } else if tag == 0x9f42 {
+    "Application Currency Code"
+  } else if tag == 0x9f44 {
+    "Application Currency Exponent"
+  } else if tag == 0x9f45 {
+    "Data Authentication Code"
+  } else if tag == 0x9f46 {
+    "ICC Public Key Certificate"
+  } else if tag == 0x9f47 {
+    "ICC Public Key Exponent"
+  } else if tag == 0x9f48 {
+    "ICC Public Key Remainder"
+  } else if tag == 0x9f49 {
+    "Dynamic Data Authentication Data Object List"
+  } else if tag == 0x9f4a {
+    "Static Data Authentication Tag List"
+  } else if tag == 0x9f4b {
+    "Signed Dynamic Application Data"
+  } else if tag == 0x9f4c {
+    "ICC Dynamic Number"
+  } else if tag == 0x9f4d {
+    "Log Entry"
+  } else if tag == 0x9f4f {
+    "Log Format"
+  } else if tag == 0x9f51 {
+    "Issuer Application Data (2)"
+  } else if tag == 0x9f52 {
+    "Application Default Action"
+  } else if tag == 0x9f54 {
+    "Transaction Category Code (2)"
+  } else if tag == 0x9f5b {
+    "DS Summary 1"
+  } else if tag == 0x9f5d {
+    "DS Summary 2"
+  } else if tag == 0x9f62 {
+    "PCVC3"
+  } else if tag == 0x9f63 {
+    "PUNATC"
+  } else if tag == 0x9f66 {
+    "Terminal Transaction Qualifiers"
   } else {
     "Unknown"
   }
