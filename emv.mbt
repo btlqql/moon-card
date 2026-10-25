@@ -77,3 +77,25 @@ pub fn parse_record(bytes : Array[Int]) -> Array[Tlv]? raise TlvError {
     None => Some(items)
   }
 }
+
+pub(all) struct AflEntry {
+  sfi : Int
+  first_record : Int
+  last_record : Int
+  oda_count : Int
+}
+
+pub fn parse_afl(afl : Array[Int]) -> Array[AflEntry] {
+  let out : Array[AflEntry] = Array::new()
+  let mut i = 0
+  while i + 3 < afl.length() {
+    out.push({
+      sfi: (afl[i] >> 3) & 0x1f,
+      first_record: afl[i + 1],
+      last_record: afl[i + 2],
+      oda_count: afl[i + 3],
+    })
+    i = i + 4
+  }
+  out
+}

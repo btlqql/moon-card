@@ -149,3 +149,61 @@ pub fn format_expiry(yymmdd : String) -> String {
     yymmdd.substring(start=2, end=4)
   }
 }
+
+fn all_digits(text : String, start : Int, end : Int) -> Bool {
+  if start < 0 || end > text.length() || start >= end {
+    return false
+  }
+  for i in start..<end {
+    let c = text[i].to_int()
+    if c < 48 || c > 57 {
+      return false
+    }
+  }
+  true
+}
+
+fn digits_value(text : String, start : Int, end : Int) -> Int {
+  let mut value = 0
+  for i in start..<end {
+    value = value * 10 + (text[i].to_int() - 48)
+  }
+  value
+}
+
+pub fn validate_pan(pan : String) -> Array[String] {
+  let issues : Array[String] = Array::new()
+  if pan.length() < 12 || pan.length() > 19 {
+    issues.push("PAN length must be 12-19 digits")
+  } else if !all_digits(pan, 0, pan.length()) {
+    issues.push("PAN must contain only digits")
+  } else if !luhn_valid(pan) {
+    issues.push("PAN fails the Luhn check")
+  }
+  issues
+}
+
+pub fn validate_expiry(yymmdd : String) -> Array[String] {
+  let issues : Array[String] = Array::new()
+  if yymmdd.length() != 6 || !all_digits(yymmdd, 0, 6) {
+    issues.push("expiry must be six digits (YYMMDD)")
+  } else {
+    let month = digits_value(yymmdd, 2, 4)
+    let day = digits_value(yymmdd, 4, 6)
+    if month < 1 || month > 12 {
+      issues.push("expiry month must be 01-12")
+    }
+    if day < 1 || day > 31 {
+      issues.push("expiry day must be 01-31")
+    }
+  }
+  issues
+}
+
+pub fn validate_service_code(code : String) -> Array[String] {
+  let issues : Array[String] = Array::new()
+  if code.length() != 3 || !all_digits(code, 0, 3) {
+    issues.push("service code must be three digits")
+  }
+  issues
+}

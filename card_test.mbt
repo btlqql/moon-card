@@ -197,3 +197,24 @@ test "extended APDU encoding and parsing" {
   assert_eq(parsed.data.length(), 300)
   assert_eq(parsed.le, Some(300))
 }
+
+///|
+test "AFL entries expose SFI and record range" {
+  let entries = parse_afl(h("08 01 01 00"))
+  assert_eq(entries.length(), 1)
+  assert_eq(entries[0].sfi, 1)
+  assert_eq(entries[0].first_record, 1)
+  assert_eq(entries[0].last_record, 1)
+  assert_eq(entries[0].oda_count, 0)
+}
+
+///|
+test "card profile validation reports issues" {
+  assert_eq(validate_pan("4111111111111111").length(), 0)
+  assert_true(validate_pan("4111111111111112").length() > 0)
+  assert_true(validate_pan("1234").length() > 0)
+  assert_eq(validate_expiry("251231").length(), 0)
+  assert_true(validate_expiry("251331").length() > 0)
+  assert_eq(validate_service_code("201").length(), 0)
+  assert_true(validate_service_code("20A").length() > 0)
+}
