@@ -3,7 +3,7 @@
 离线支付卡报文工具包：解析 ISO 7816 APDU、EMV BER-TLV 和真实交易日志。
 
 - 仓库：https://github.com/btlqql/moon-card
-- 版本：0.1.0
+- 版本：0.2.0
 - 许可证：Apache-2.0
 
 ## 为什么单独做这一层
