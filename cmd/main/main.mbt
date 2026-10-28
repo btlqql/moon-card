@@ -241,6 +241,17 @@ fn run() -> Unit {
         exit_code(2)
       }
     }
+  } else if command == "session" && args.length() == 4 {
+    match read_text(args[3]) {
+      Some(text) => {
+        let report = @card.analyze_session(@card.parse_transaction_log(text))
+        println(@card.render_session(report))
+      }
+      None => {
+        stderr("ERROR: cannot read transaction log")
+        exit_code(2)
+      }
+    }
   } else if command == "luhn" && args.length() == 4 {
     println(if @card.luhn_valid(args[3]) { "valid" } else { "invalid" })
   } else if command == "track2" && args.length() == 4 {

@@ -14,7 +14,7 @@ MoonCakes 上已有支付相关模块，但不在这一层：
 - [cstoooo/mooniso_lite](https://mooncakes.io/docs/cstoooo/mooniso_lite) 与 [moonpay_flow](https://mooncakes.io/docs/cstoooo/moonpay_flow) 处理 ISO 20022 支付报文与生命周期。
 - [lindividual/der](https://mooncakes.io/docs/lindividual/der) 处理 ASN.1 DER（证书/密钥），不是 EMV 的 BER-TLV 标签空间。
 
-MoonCard 处理的是**卡片与终端之间**的 APDU 和 EMV 数据对象：短/扩展 APDU、SELECT、GPO、READ RECORD、GENERATE AC、BER-TLV、AFL、PAN/有效期/持卡人、状态字与失败原因。
+MoonCard 处理的是**卡片与终端之间**的 APDU 和 EMV 数据对象：短/扩展 APDU、SELECT、GPO、READ RECORD、GENERATE AC、BER-TLV、AFL、PAN/有效期/持卡人、状态字与失败原因。除编解码外，`session` 命令按真实交易顺序分析 PPSE 候选、AID 匹配、命令顺序、AFL 记录访问、CDOL1 长度和状态字，输出 pass/review/fail 判定。
 
 面向的任务：拿到一段终端或 Level 3 认证的 APDU 日志，回答“这一步选了什么应用、GPO 返回了什么、读到了哪张卡、哪一步失败、失败状态字是什么”。
 
@@ -28,6 +28,7 @@ MoonCard 处理的是**卡片与终端之间**的 APDU 和 EMV 数据对象：�
 moon test
 moon run cmd/main --target js -- log examples/transaction.log
 moon run cmd/main --target js -- log examples/transaction.log --json
+moon run cmd/main --target js -- session examples/sessions/happy.log
 ```
 
 输出（截断）：
@@ -56,6 +57,7 @@ mooncard gpo <pdol-data-hex>           build GET PROCESSING OPTIONS
 mooncard read-record <record> <sfi>    build READ RECORD (decimal)
 mooncard gen-ac <p1> <cdol-data-hex>   build GENERATE AC
 mooncard log <transaction.log> [--json|--csv] render a recorded APDU log
+mooncard session <transaction.log>      analyze selection/order/AFL/CDOL
 mooncard luhn <pan>                    check the Luhn digit
 mooncard track2 <text>                 parse track 2 equivalent data
 ```
@@ -83,7 +85,7 @@ moon run cmd/main --target js -- response "6F 09 84 07 A0 00 00 00 03 10 10 90 0
 
 ## 测试
 
-`moon test` 共 20 项：
+`moon test` 共 28 项：
 
 - TLV 嵌套解析、标签查找、扩展标签字典、扁平化/路径查询、构造模板编码往返、截断/非法长度。
 - APDU 短格式 case 1/2/3/4 往返、Le=256、扩展 APDU 往返、响应拆分。
@@ -94,6 +96,8 @@ moon run cmd/main --target js -- response "6F 09 84 07 A0 00 00 00 03 10 10 90 0
 - 交易日志的命令/响应/卡片信息提取；命令/响应/成功/错误计数；畸形输入记录。
 - pyemv 参考编码示例的 TLV 编码一致性。
 - JSON / CSV 交易报告：掩码 PAN、Luhn、状态字、命令与标签。
+- 会话语义：PPSE 双候选选择、错误顺序、缺 PAN、AFL 越界、CDOL 长度不符、状态字失败。
+- 会话语义细节见 [docs/emv-session-analysis.md](docs/emv-session-analysis.md)。
 
 GitHub Actions 在 wasm、wasm-gc、js、native 四个后端执行 check/build/test。
 
