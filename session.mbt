@@ -84,6 +84,38 @@ pub fn cdol_total_length(fields : Array[(Int, Int)]) -> Int {
   total
 }
 
+pub(all) suberror DolError { InvalidDol }
+
+// EMV DOL lengths are one-byte field widths, not BER value lengths.
+pub fn parse_dol(bytes : Array[Int]) -> Array[(Int, Int)] raise DolError {
+  let out : Array[(Int, Int)] = []
+  let mut i = 0
+  while i < bytes.length() {
+    let first = bytes[i]
+    if first <= 0 || first >= 255 { raise InvalidDol }
+    let mut tag = first
+    i = i + 1
+    if (first & 31) == 31 {
+      let mut count = 1
+      while true {
+        if i >= bytes.length() || count >= 4 { raise InvalidDol }
+        let b = bytes[i]
+        if count == 1 && (b & 127) == 0 { raise InvalidDol }
+        tag = (tag << 8) | b
+        i = i + 1
+        count = count + 1
+        if (b & 128) == 0 { break }
+      }
+    }
+    if i >= bytes.length() { raise InvalidDol }
+    let length = bytes[i]
+    if length < 0 || length > 255 { raise InvalidDol }
+    out.push((tag,length))
+    i = i + 1
+  }
+  out
+}
+
 fn is_ppse_select(command : Apdu) -> Bool {
   command.ins == 0xa4 && command.p1 == 0x04 &&
   ascii_of(command.data).contains("2PAY")
@@ -97,7 +129,8 @@ fn record_items(response : ApduResponse) -> Array[Tlv] raise TlvError {
   }
 }
 
-pub fn analyze_session(report : TxReport) -> SessionReport {
+pub fn analyze_session(raw_report : TxReport) -> SessionReport {
+  let report = resolve_apdu_procedures(raw_report)
   let issues : Array[SessionIssue] = Array::new()
   let candidates : Array[String] = Array::new()
   let records : Array[(Int, Int)] = Array::new()
@@ -106,11 +139,21 @@ pub fn analyze_session(report : TxReport) -> SessionReport {
   let mut afl : Array[AflEntry] = Array::new()
   let mut gpo_seen = false
   let mut cdol_length = 0
+  let mut pdol_length = 0
+  let mut completed = false
+  let mut pan_seen = false
+  let mut expiry_seen = false
+  for _ in report.errors {
+    issue(issues, 0, "LOG_PARSE_ERROR", "fail", "log contains an unparseable line or APDU")
+  }
   let mut i = 0
   while i < report.steps.length() {
     let step = report.steps[i]
     match step.apdu {
-      None => i = i + 1
+      None => {
+        issue(issues, i + 1, "UNPAIRED_STEP", "fail", "response or malformed command without a paired command")
+        i = i + 1
+      }
       Some(command) => {
         let step_no = i + 1
         let response = if i + 1 < report.steps.length() {
@@ -134,9 +177,23 @@ pub fn analyze_session(report : TxReport) -> SessionReport {
                 "fail",
                 "SW=" + hex_int(resp.sw, 4) + " " + status_description(resp.sw),
               )
+              i = i + 2
+              continue
             }
             if command.ins == 0xa4 && command.p1 == 0x04 {
+              // An application selection starts a fresh transaction context.
+              selected_aid = None
+              aip = None
+              afl = []
+              records.clear()
+              gpo_seen = false
+              cdol_length = 0
+              pdol_length = 0
+              completed = false
+              pan_seen = false
+              expiry_seen = false
               if is_ppse_select(command) {
+                candidates.clear()
                 for value in collect_tag_values(response_tlv, 0x4f) {
                   candidates.push(hex_compact(value))
                 }
@@ -145,7 +202,6 @@ pub fn analyze_session(report : TxReport) -> SessionReport {
                 }
               } else {
                 let requested = hex_compact(command.data)
-                selected_aid = Some(requested)
                 let returned = match find_tag(response_tlv, 0x84) {
                   Some(tag) => hex_compact(tag.value)
                   None => {
@@ -153,7 +209,14 @@ pub fn analyze_session(report : TxReport) -> SessionReport {
                     ""
                   }
                 }
-                if returned.length() > 0 && returned != requested {
+                selected_aid = Some(if returned.length() > 0 { returned } else { requested })
+                match find_tag(response_tlv,0x9f38) {
+                  Some(dol) => try {
+                    pdol_length = cdol_total_length(parse_dol(dol.value))
+                  } catch { _ => issue(issues,step_no,"INVALID_PDOL","fail","SELECT contains a malformed PDOL") }
+                  None => ()
+                }
+                if requested.length() == 0 || returned.length() > 0 && !returned.has_prefix(requested) {
                   issue(
                     issues,
                     step_no,
@@ -165,7 +228,7 @@ pub fn analyze_session(report : TxReport) -> SessionReport {
                 if candidates.length() > 0 {
                   let mut found = false
                   for candidate in candidates {
-                    if candidate == requested {
+                    if candidate == returned {
                       found = true
                     }
                   }
@@ -175,6 +238,16 @@ pub fn analyze_session(report : TxReport) -> SessionReport {
                 }
               }
             } else if command.ins == 0xa8 {
+              let pdol = try { find_tag(parse_tlv(command.data),0x83) } catch { _ => None }
+              match pdol {
+                Some(tag) => if tag.value.length() != pdol_length {
+                  issue(issues,step_no,"PDOL_LENGTH_MISMATCH","fail","GPO command does not match SELECT PDOL field lengths")
+                }
+                None => issue(issues,step_no,"GPO_COMMAND_TEMPLATE","fail","GPO command has no valid 83 PDOL template")
+              }
+              if selected_aid.is_none() {
+                issue(issues, step_no, "GPO_BEFORE_SELECT", "fail", "GPO has no successful application selection")
+              }
               gpo_seen = true
               let gpo = try {
                 parse_gpo_response(resp.data)
@@ -219,18 +292,23 @@ pub fn analyze_session(report : TxReport) -> SessionReport {
                 issue(issues, step_no, "RECORD_TEMPLATE", "fail", "READ RECORD response has no usable TLV")
               } else {
                 let pan = find_tag(items, 0x5a).is_some() || find_tag(items, 0x57).is_some()
-                if !pan {
-                  issue(issues, step_no, "MISSING_PAN", "fail", "record has neither 5A nor 57")
-                }
-                if find_tag(items, 0x5f24).is_none() {
-                  issue(issues, step_no, "MISSING_EXPIRY", "review", "record has no 5F24 expiry")
-                }
+                pan_seen = pan_seen || pan
+                expiry_seen = expiry_seen || find_tag(items, 0x5f24).is_some()
                 match find_tag(items, 0x8c) {
-                  Some(tag) => cdol_length = cdol_total_length(parse_cdol(tag.value))
+                  Some(tag) => try { cdol_length = cdol_total_length(parse_dol(tag.value)) }
+                    catch { _ => issue(issues,step_no,"INVALID_CDOL","fail","record contains a malformed CDOL1") }
                   None => ()
                 }
               }
             } else if command.ins == 0xae {
+              completed = true
+              for entry in afl {
+                for number in entry.first_record..<(entry.last_record + 1) {
+                  if !records.contains((entry.sfi, number)) {
+                    issue(issues, step_no, "AFL_RECORD_MISSING", "fail", "GENERATE AC before all AFL records were read")
+                  }
+                }
+              }
               if !gpo_seen {
                 issue(issues, step_no, "GENERATE_AC_BEFORE_GPO", "fail", "GENERATE AC before GPO")
               }
@@ -251,9 +329,18 @@ pub fn analyze_session(report : TxReport) -> SessionReport {
             }
           }
         }
-        i = i + 2
+        i = i + (if response.is_some() { 2 } else { 1 })
       }
     }
+  }
+  if !completed {
+    issue(issues, report.steps.length(), "INCOMPLETE_TRANSACTION", "review", "capture has no successful GENERATE AC; no complete transaction verdict is available")
+  }
+  if records.length() > 0 && !pan_seen {
+    issue(issues, report.steps.length(), "MISSING_PAN", "fail", "none of the application records has 5A or 57")
+  }
+  if records.length() > 0 && !expiry_seen {
+    issue(issues, report.steps.length(), "MISSING_EXPIRY", "review", "no 5F24 expiry was found across application records")
   }
   let mut fail = false
   let mut review = false

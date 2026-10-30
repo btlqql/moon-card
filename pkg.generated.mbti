@@ -1,0 +1,229 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "btlqql/moon_card"
+
+// Values
+pub fn analyze_session(TxReport) -> SessionReport
+
+pub fn ascii_bytes(String) -> Array[Int]
+
+pub fn ascii_of(Array[Int]) -> String
+
+pub fn bcd_to_string(Array[Int]) -> String?
+
+pub fn card_data_from_tlv(Array[Tlv]) -> CardData
+
+pub fn cardholder_from_tlv(Array[Tlv]) -> String?
+
+pub fn cdol_total_length(Array[(Int, Int)]) -> Int
+
+pub fn collect_tag_values(Array[Tlv], Int) -> Array[Array[Int]]
+
+pub fn collect_tags(Array[Tlv]) -> Array[Int]
+
+pub fn command_name(Apdu) -> String
+
+pub fn encode_tlv(Tlv) -> Array[Int]
+
+pub fn encode_tlvs(Array[Tlv]) -> Array[Int]
+
+pub fn expiry_from_tlv(Array[Tlv]) -> String?
+
+pub fn find_path(Array[Tlv], Array[Int]) -> Tlv?
+
+pub fn find_tag(Array[Tlv], Int) -> Tlv?
+
+pub fn flatten_tlvs(Array[Tlv]) -> Array[Tlv]
+
+pub fn format_expiry(String) -> String
+
+pub fn generate_ac(Int, Array[Int]) -> Apdu
+
+pub fn get_data(Int) -> Apdu
+
+pub fn gpo(Array[Int]) -> Apdu
+
+pub fn hex_decode(String) -> Array[Int]?
+
+pub fn hex_encode(Array[Int]) -> String
+
+pub fn hex_int(Int, Int) -> String
+
+pub fn hex_nibble_char(Int) -> Char
+
+pub fn label_from_tlv(Array[Tlv]) -> String?
+
+pub fn luhn_valid(String) -> Bool
+
+pub fn mask_pan(String) -> String
+
+pub fn pan_from_tlv(Array[Tlv]) -> String?
+
+pub fn parse_afl(Array[Int]) -> Array[AflEntry]
+
+pub fn parse_apdu(Array[Int]) -> Apdu raise ApduError
+
+pub fn parse_cdol(Array[Int]) -> Array[(Int, Int)]
+
+pub fn parse_dol(Array[Int]) -> Array[(Int, Int)] raise DolError
+
+pub fn parse_gpo_response(Array[Int]) -> GpoInfo? raise TlvError
+
+pub fn parse_record(Array[Int]) -> Array[Tlv]? raise TlvError
+
+pub fn parse_response(Array[Int]) -> ApduResponse raise ApduError
+
+pub fn parse_tlv(Array[Int]) -> Array[Tlv] raise TlvError
+
+pub fn parse_track2(Array[Int]) -> Track2?
+
+pub fn parse_transaction_log(String) -> TxReport
+
+pub fn read_record(Int, Int) -> Apdu
+
+pub fn render_session(SessionReport) -> String
+
+pub fn render_transaction(TxReport) -> String
+
+pub fn render_transaction_csv(TxReport) -> String
+
+pub fn render_transaction_json(TxReport) -> String
+
+pub fn resolve_apdu_procedures(TxReport) -> TxReport
+
+pub fn select_aid(Array[Int]) -> Apdu
+
+pub fn select_ppse() -> Apdu
+
+pub fn service_code_text(String) -> String
+
+pub fn status_description(Int) -> String
+
+pub fn summarize_transaction(TxReport) -> TxSummary
+
+pub fn tag_name(Int) -> String
+
+pub fn tag_to_hex(Int) -> String
+
+pub fn validate_expiry(String) -> Array[String]
+
+pub fn validate_pan(String) -> Array[String]
+
+pub fn validate_service_code(String) -> Array[String]
+
+pub fn verify_pin(Array[Int]) -> Apdu
+
+// Errors
+pub(all) suberror ApduError {
+  Truncated
+  BadLength
+  LeTooLarge(Int)
+  DataTooLarge(Int)
+}
+
+pub(all) suberror DolError {
+  InvalidDol
+}
+
+pub(all) suberror TlvError {
+  Truncated
+  BadTag
+  BadLength
+  TooDeep
+}
+
+// Types and methods
+pub(all) struct AflEntry {
+  sfi : Int
+  first_record : Int
+  last_record : Int
+  oda_count : Int
+}
+
+pub(all) struct Apdu {
+  cla : Int
+  ins : Int
+  p1 : Int
+  p2 : Int
+  data : Array[Int]
+  le : Int?
+}
+pub fn Apdu::encode(Self) -> Array[Int] raise ApduError
+pub fn Apdu::encode_extended(Self) -> Array[Int] raise ApduError
+pub fn Apdu::new(Int, Int, Int, Int, data? : Array[Int], le? : Int) -> Self
+
+pub(all) struct ApduResponse {
+  data : Array[Int]
+  sw : Int
+}
+
+pub(all) struct CardData {
+  pan : String?
+  expiry : String?
+  cardholder : String?
+  label : String?
+}
+
+pub(all) struct GpoInfo {
+  aip : Array[Int]
+  afl : Array[Int]
+}
+
+pub(all) struct SessionIssue {
+  step : Int
+  code : String
+  severity : String
+  detail : String
+}
+
+pub(all) struct SessionReport {
+  verdict : String
+  candidates : Array[String]
+  selected_aid : String?
+  aip : String?
+  afl : Array[AflEntry]
+  records : Array[(Int, Int)]
+  issues : Array[SessionIssue]
+  steps : Int
+}
+
+pub(all) struct Tlv {
+  tag : Int
+  constructed : Bool
+  value : Array[Int]
+  children : Array[Tlv]
+}
+
+pub(all) struct Track2 {
+  pan : String
+  expiry : String
+  service_code : String
+}
+
+pub(all) struct TxReport {
+  steps : Array[TxStep]
+  errors : Array[String]
+  pan : String?
+  expiry : String?
+  cardholder : String?
+  label : String?
+}
+
+pub(all) struct TxStep {
+  direction : String
+  bytes : Array[Int]
+  apdu : Apdu?
+  response : ApduResponse?
+  tlv : Array[Tlv]
+  note : String
+}
+
+pub(all) struct TxSummary {
+  commands : Int
+  responses : Int
+  successes : Int
+  errors : Int
+}
+
+// Type aliases
+
+// Traits

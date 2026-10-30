@@ -47,13 +47,17 @@ pub fn parse_transaction_log(text : String) -> TxReport {
       Some("<<")
     } else if line.has_prefix("R:") {
       Some("<<")
+    } else if line.has_prefix("send:") {
+      Some(">>")
+    } else if line.has_prefix("resp:") {
+      Some("<<")
     } else {
       None
     }
     match direction {
       None => errors.push("unrecognized line: " + line)
       Some(dir) => {
-        let body = line.substring(start=2)
+        let body = line.substring(start=(if line.has_prefix("send:") || line.has_prefix("resp:") { 5 } else { 2 }))
         let bytes = match hex_decode(body.trim_space().to_string()) {
           Some(values) => values
           None => {

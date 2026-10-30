@@ -17,7 +17,7 @@ extern "js" fn exit_code(code : Int) -> Unit =
 
 fn usage() -> Unit {
   println(
-    "MoonCard 0.1.0\n" +
+    "MoonCard 0.3.0\n" +
     "Usage:\n" +
     "  mooncard tlv <hex>                     parse BER-TLV\n" +
     "  mooncard response <hex>                parse APDU response + TLV\n" +
@@ -27,6 +27,7 @@ fn usage() -> Unit {
     "  mooncard read-record <record> <sfi>    build READ RECORD (decimal)\n" +
     "  mooncard gen-ac <p1> <cdol-data-hex>   build GENERATE AC\n" +
     "  mooncard log <transaction.log>         render a recorded APDU log\n" +
+    "  mooncard session <transaction.log>     audit logical APDU session\n" +
     "  mooncard luhn <pan>                    check the Luhn digit\n" +
     "  mooncard track2 <text>                 parse track 2 equivalent data",
   )
@@ -246,6 +247,7 @@ fn run() -> Unit {
       Some(text) => {
         let report = @card.analyze_session(@card.parse_transaction_log(text))
         println(@card.render_session(report))
+        if report.verdict == "fail" { exit_code(1) }
       }
       None => {
         stderr("ERROR: cannot read transaction log")
