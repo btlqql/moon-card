@@ -24,3 +24,9 @@ session命令发现fail时返回1；review输出供人工复核，退出码为0�
 新版功能和复现任务见[本轮复核](docs/final-review-20261030.md)。Windows本地完成JS、wasm、wasm-gc的check/build/test及独立消费工程。外部样例来源、固定提交和Apache许可证见[样例来源](examples/external/SOURCES.md)。部分捕获输出review表示需要人工复核，不能当作完整交易通过。
 
 不是EMV内核或认证工具；不处理密码学，不连接真实读卡器。示例为构造日志，pass仅表示已实现检查未发现错误。
+
+## 项目申报书与发布
+
+- [Markdown 项目申报书](docs/proposal.md)
+- [GitHub Release v0.3.0](https://github.com/btlqql/moon-card/releases/tag/v0.3.0)
+- [MoonCakes 0.3.0](https://mooncakes.io/docs/btlqql/moon_card@0.3.0)
