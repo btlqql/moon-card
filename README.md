@@ -27,6 +27,7 @@ session命令发现fail时返回1；review输出供人工复核，退出码为0�
 
 ## 项目申报书与发布
 
-- [Markdown 项目申报书](docs/proposal.md)
+- [完整Markdown项目申报书](docs/proposal.md)
+- [一页说明摘要](docs/proposal-summary.md)
 - [GitHub Release v0.3.0](https://github.com/btlqql/moon-card/releases/tag/v0.3.0)
 - [MoonCakes 0.3.0](https://mooncakes.io/docs/btlqql/moon_card@0.3.0)
